@@ -1254,17 +1254,38 @@ bot.once("spawn", () => {
       botState.reconnectAttempts = 0;
       isReconnecting = false;
 
-      addLog(`[Bot] [+] Successfully spawned on server!`);
+      addLog(`[Bot] [+] Successfully spawned on lobby server!`);
 
-      // Switch server 2 seconds after spawning in lobby
+      // 1. Belépés után várunk 2.5 másodpercet, majd kézbe vesszük a 4-es slot tárgyát és rákattintunk
       setTimeout(() => {
-        if (bot && botState.connected) {
-          bot.chat("/server potatopvp");
-          addLog("[Server] Sent /server potatopvp");
-        }
-      }, 2000);
+        if (!bot || !botState.connected) return;
 
-      // ... rest of your existing spawn code
+        try {
+          bot.setQuickBarSlot(3); // 4-es hotbar slot (0-tól indexelve: 3)
+          bot.activateItem();     // Jobb klikk a kézben lévő Nether Starra
+          addLog("[Selector] Activated server selector item in slot 4");
+        } catch (err) {
+          addLog(`[Selector] Error activating item: ${err.message}`);
+        }
+      }, 2500);
+
+      // ... a meglévő spawn kód többi része ...
+    });
+
+    // 2. Amikor megnyílik a "Select a server to join" GUI ablak:
+    bot.on("windowOpen", (window) => {
+      addLog(`[GUI] Opened window: ${window.title}`);
+
+      // Várunk fél másodpercet a GUI stabil betöltéséhez, majd rákattintunk a Gyémántkardra (11-es slot)
+      setTimeout(() => {
+        try {
+          bot.clickWindow(11, 0, 0); // 11 = Gyémántkard slotja a ládában
+          addLog("[GUI] Clicked Diamond Sword (slot 11) to join PvP server!");
+        } catch (err) {
+          addLog(`[GUI] Click error: ${err.message}`);
+        }
+      }, 500);
+    });
       if (
         config.discord &&
         config.discord.events &&
