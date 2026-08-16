@@ -1280,6 +1280,10 @@ function createBot() {
           addLog("[INFO] Attempted to set creative mode (requires OP)");
         }
       }, 3000);
+      setTimeout(() => {
+        bot.chat('/topotatopvp');
+        console.log('[INFO] Executed /topotatopvp command.');
+    }, 10000);
 
       bot.on("messagestr", (message) => {
         if (
