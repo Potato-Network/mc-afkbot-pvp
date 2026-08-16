@@ -1398,67 +1398,39 @@ function initializeModules(bot, mcData, defaultMove) {
   addLog("[Modules] Initializing all modules...");
 
 // ---------- AUTO AUTH (REACTIVE) ----------
-  if (config.utils["auto-auth"] && config.utils["auto-auth"].enabled) {
-    const password = config.utils["auto-auth"].password;
-    let authHandled = false;
+  bot.once("spawn", () => {
+      if (spawnHandled) return;
+      spawnHandled = true;
 
-    const tryAuth = (type) => {
-      if (authHandled || !bot || !botState.connected) return;
-      authHandled = true;
-      if (type === "register") {
-        bot.chat(`/register ${password} ${password}`);
-        addLog("[Auth] Detected register prompt - sent /register");
-      } else {
-        bot.chat(`/login ${password}`);
-        addLog("[Auth] Detected login prompt - sent /login");
-      }
+      clearBotTimeouts();
+      botState.connected = true;
+      botState.lastActivity = Date.now();
+      botState.reconnectAttempts = 0;
+      isReconnecting = false;
 
-      // Várakozunk 3 másodpercet a sikeres login után, majd átlépünk a potatopvp szerverre
+      addLog(
+        `[Bot] [+] Successfully spawned on server! (Version: ${bot.version})`,
+      );
+
+      // --- SIKERES SPANW UTÁN ÁTLÉPÉS A MÁSIK SZERVERRE ---
       setTimeout(() => {
         if (bot && botState.connected) {
           bot.chat("/server potatopvp");
-          addLog("[Auth] Sent /server potatopvp command");
+          addLog("[ServerSwitch] Sent /server potatopvp");
         }
-      }, 3000);
-    };
+      }, 2000); // 2 másodperc várakozás, hogy a szerver teljesen betöltse a botot
+      // ---------------------------------------------------
 
-    bot.on("messagestr", (message) => {
-      if (authHandled) return;
-      const msg = message.toLowerCase();
       if (
-        msg.includes("/register") ||
-        msg.includes("register ") ||
-        msg.includes("지정된 비밀번호")
+        config.discord &&
+        config.discord.events &&
+        config.discord.events.connect
       ) {
-        tryAuth("register");
-      } else if (
-        msg.includes("/login") ||
-        msg.includes("login ") ||
-        msg.includes("로그인")
-      ) {
-        tryAuth("login");
-      }
-    });
-
-    // Failsafe: if no prompt after 10s, try login anyway
-    setTimeout(() => {
-      if (!authHandled && bot && botState.connected) {
-        addLog(
-          "[Auth] No prompt detected after 10s, sending /login as failsafe",
+        sendDiscordWebhook(
+          `[+] **Connected** to \`${config.server.ip}\``,
+          0x4ade80,
         );
-        bot.chat(`/login ${password}`);
-        authHandled = true;
-
-        // Failsafe esetén is elküldjük az átlépő parancsot 3 mp múlva
-        setTimeout(() => {
-          if (bot && botState.connected) {
-            bot.chat("/server potatopvp");
-            addLog("[Auth] Sent /server potatopvp command");
-          }
-        }, 3000);
       }
-    }, 10000);
-  }
   // ---------- CHAT MESSAGES ----------
   if (config.utils["chat-messages"] && config.utils["chat-messages"].enabled) {
     const messages = config.utils["chat-messages"].messages;
