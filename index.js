@@ -1244,7 +1244,7 @@ function createBot() {
     // FIX: guard against spawn firing twice (can happen on some servers)
     let spawnHandled = false;
 
-    bot.once("spawn", () => {
+bot.once("spawn", () => {
       if (spawnHandled) return;
       spawnHandled = true;
 
@@ -1254,9 +1254,17 @@ function createBot() {
       botState.reconnectAttempts = 0;
       isReconnecting = false;
 
-      addLog(
-        `[Bot] [+] Successfully spawned on server! (Version: ${bot.version})`,
-      );
+      addLog(`[Bot] [+] Successfully spawned on server!`);
+
+      // Switch server 2 seconds after spawning in lobby
+      setTimeout(() => {
+        if (bot && botState.connected) {
+          bot.chat("/server potatopvp");
+          addLog("[Server] Sent /server potatopvp");
+        }
+      }, 2000);
+
+      // ... rest of your existing spawn code
       if (
         config.discord &&
         config.discord.events &&
@@ -1398,39 +1406,18 @@ function initializeModules(bot, mcData, defaultMove) {
   addLog("[Modules] Initializing all modules...");
 
 // ---------- AUTO AUTH (REACTIVE) ----------
-  bot.once("spawn", () => {
-      if (spawnHandled) return;
-      spawnHandled = true;
+  if (config.utils["auto-auth"] && config.utils["auto-auth"].enabled) {
+    const password = config.utils["auto-auth"].password;
 
-      clearBotTimeouts();
-      botState.connected = true;
-      botState.lastActivity = Date.now();
-      botState.reconnectAttempts = 0;
-      isReconnecting = false;
-
-      addLog(
-        `[Bot] [+] Successfully spawned on server! (Version: ${bot.version})`,
-      );
-
-      // --- SIKERES SPANW UTÁN ÁTLÉPÉS A MÁSIK SZERVERRE ---
-      setTimeout(() => {
-        if (bot && botState.connected) {
-          bot.chat("/server potatopvp");
-          addLog("[ServerSwitch] Sent /server potatopvp");
-        }
-      }, 2000); // 2 másodperc várakozás, hogy a szerver teljesen betöltse a botot
-      // ---------------------------------------------------
-
-      if (
-        config.discord &&
-        config.discord.events &&
-        config.discord.events.connect
-      ) {
-        sendDiscordWebhook(
-          `[+] **Connected** to \`${config.server.ip}\``,
-          0x4ade80,
-        );
+    bot.on("messagestr", (message) => {
+      const msg = message.toLowerCase();
+      if (msg.includes("/register")) {
+        bot.chat(`/register ${password} ${password}`);
+      } else if (msg.includes("/login")) {
+        bot.chat(`/login ${password}`);
       }
+    });
+  }
   // ---------- CHAT MESSAGES ----------
   if (config.utils["chat-messages"] && config.utils["chat-messages"].enabled) {
     const messages = config.utils["chat-messages"].messages;
