@@ -1397,7 +1397,7 @@ function scheduleReconnect() {
 function initializeModules(bot, mcData, defaultMove) {
   addLog("[Modules] Initializing all modules...");
 
-  // ---------- AUTO AUTH (REACTIVE) ----------
+// ---------- AUTO AUTH (REACTIVE) ----------
   if (config.utils["auto-auth"] && config.utils["auto-auth"].enabled) {
     const password = config.utils["auto-auth"].password;
     let authHandled = false;
@@ -1412,6 +1412,14 @@ function initializeModules(bot, mcData, defaultMove) {
         bot.chat(`/login ${password}`);
         addLog("[Auth] Detected login prompt - sent /login");
       }
+
+      // Várakozunk 3 másodpercet a sikeres login után, majd átlépünk a potatopvp szerverre
+      setTimeout(() => {
+        if (bot && botState.connected) {
+          bot.chat("/server potatopvp");
+          addLog("[Auth] Sent /server potatopvp command");
+        }
+      }, 3000);
     };
 
     bot.on("messagestr", (message) => {
@@ -1440,10 +1448,17 @@ function initializeModules(bot, mcData, defaultMove) {
         );
         bot.chat(`/login ${password}`);
         authHandled = true;
+
+        // Failsafe esetén is elküldjük az átlépő parancsot 3 mp múlva
+        setTimeout(() => {
+          if (bot && botState.connected) {
+            bot.chat("/server potatopvp");
+            addLog("[Auth] Sent /server potatopvp command");
+          }
+        }, 3000);
       }
     }, 10000);
   }
-
   // ---------- CHAT MESSAGES ----------
   if (config.utils["chat-messages"] && config.utils["chat-messages"].enabled) {
     const messages = config.utils["chat-messages"].messages;
