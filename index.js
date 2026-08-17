@@ -1281,8 +1281,8 @@ function createBot() {
         }
       }, 3000);
       setTimeout(() => {
-        bot.chat('/topotatopvp');
-        console.log('[INFO] Executed /topotatopvp command.');
+        bot.chat('/tosurvivors');
+        console.log('[INFO] Executed /tosurvivors command.');
     }, 10000);
 
       bot.on("messagestr", (message) => {
